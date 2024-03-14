@@ -15,7 +15,7 @@ def entriesLogging(df):
         comments = df['Comment']
     commentsTitle = '\n\subsection{{Comments}}'
 
-    section = '\n\n'+sectionTitle + '\n' + taskTitle + '\n' + tasks + skillsTitle + '\n' + skills_req + commentsTitle + '\n' + comments + '\n\n'
+    section = f"\n\n {sectionTitle} \n {taskTitle} \n  {tasks}  {skillsTitle} \n  {skills_req}  {commentsTitle} \n  {comments}  \n\n"
     return section
 
 def diaryLatexGen(dataFile):

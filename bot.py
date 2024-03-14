@@ -1,37 +1,68 @@
 import discord
 from discord.ext import commands
 import os
-from dotenv import load_dotenv
 import subprocess
+from dotenv import load_dotenv
+
+
 
 load_dotenv()
-
 TOKEN = os.getenv('DISCORD_BOT_TOKEN')
 
-bot = command.Bot(command_prefix='!')
+intents = discord.Intents.default()
+intents.messages = True
+intents.guilds = True
+intents.reactions = True
+intents.members = True
+
+bot = commands.Bot(command_prefix='!', intents=intents)
+
+bot.remove_command('help')
 
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user}")
+    print(f'Logged in as {bot.user.name}')
 
 @bot.command()
-async def compile(ctx):
-    if ctx.message.attachments:
-        attachment = ctx.message.attachments[0]
-        file_path = f""
+async def help(ctx):
+    help_message = (
+        "Welcome to the Bot!\n"
+        "Command List:\n"
+        "!help - Display this help message.\n"
+        "!process_file - Process a CSV file and send a PDF back."
+    )
+    await ctx.send(help_message)
 
-        await attachment.save(file_path)
+@bot.command()
+async def process_file(ctx):
+    if not ctx.message.attachments:
+        await ctx.send("No file attached.")
+        return
 
-        try:
-            subprocess.run(["python", "main.py"], check=True)
-            await ctx.send('File compilation successful")
+    attached_file = ctx.message.attachments[0]
+    file_path = os.path.join(os.getcwd(), attached_file.filename)
 
-            fileName_split = os.path.splittext(attachment.filename)[0]
-            pdf_file = fileName_split + ".pdf"
+    # Check if the file is named 'template.csv' and exit early
+    if attached_file.filename.lower() == 'template.csv':
+        await ctx.send("This is a template file. No processing needed.")
+        return
 
-            await ctx.send(file=discord.File(pdf_file)
+    await attached_file.save(file_path)
 
-        except subprocess.CalledProcessError as e:
-            await ctx.send(f"File compilation failed. Error: {e}")
+    try:
+        # Run your other Python code here
+        subprocess.run(['python3', 'main.py'], check=True)
+
+        # Generate a PDF with the same name as the CSV file
+        pdf_file_path = file_path.replace('.csv', '.pdf')
+
+        # Send the PDF file
+        pdf_file = discord.File(pdf_file_path)
+        await ctx.send("File processed successfully.", file=pdf_file)
+
+    except subprocess.CalledProcessError as e:
+        await ctx.send(f"Error processing file: {e}")
+
 
 bot.run(TOKEN)
+
